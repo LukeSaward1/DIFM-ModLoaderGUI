@@ -105,8 +105,8 @@ namespace DIFM_ModLoaderGUI
             if (result == DialogResult.OK)
             {
                 hasSet = true;
-                downloadPath = folderDlg.SelectedPath + @"\Do It For Me V1.0.1_Data\Managed\Assembly-CSharp.dll";
                 textBox1.Text = folderDlg.SelectedPath;
+                downloadPath = textBox1.Text + @"\Do It For Me V1.0.1_Data\Managed\Assembly-CSharp.dll";
             }
         }
 
@@ -116,26 +116,32 @@ namespace DIFM_ModLoaderGUI
             {
                 using (var client = new WebClient())
                 {
+                    downloadPath = textBox1.Text + @"\Do It For Me V1.0.1_Data\Managed\Assembly-CSharp.dll";
                     if (textBox2.Text.Contains("Latest") || textBox2.Text.Contains("latest"))
                     {
-                        client.DownloadFile("https://raw.githubusercontent.com/LukeSaward1/DiFM-Speedrun-Mod/main/Assembly-CSharp.dll", downloadPath);
+                        try
+                        {
+                            client.DownloadFile("https://raw.githubusercontent.com/LukeSaward1/DiFM-Speedrun-Mod/main/Assembly-CSharp.dll", downloadPath);
+                            MessageBox.Show("The file has been successfully downloaded and is located in the 'Managed' folder in the 'Do It For Me V1.0.1_Data' " +
+                                "folder under Assembly-CSharp.dll", "File successfully downloaded");
+                        }
+                        catch
+                        {
+                            MessageBox.Show("You must enter a valid version number (e.g. 1.0.2.1 or latest)");
+                        }
                     }
                     else
                     {
                         try
                         {
-                            bool hasCompletedDownload = false;
                             actualURL = "https://github.com/LukeSaward1/DiFM-Speedrun-Mod/releases/download/v" + textBox2.Text + "/Assembly-CSharp.dll";
-                            client.DownloadFileAsync(new Uri(actualURL), downloadPath);
-                            client.DownloadFileCompleted += (s, er) => hasCompletedDownload = true;
-                            if(hasCompletedDownload)
-                            {
-                                MessageBox.Show("The file has been successfully downloaded and is located in the 'Managed' folder in the 'Do It For Me V1.0.1_Data' folder under Assembly-CSharp.dll", "File successfully downloaded");
-                            }
+                            client.DownloadFile(actualURL, downloadPath);
+                            MessageBox.Show("The file has been successfully downloaded and is located in the 'Managed' folder in the 'Do It For Me V1.0.1_Data' " +
+                                "folder under Assembly-CSharp.dll", "File successfully downloaded");
                         }
                         catch
                         {
-                            MessageBox.Show("You must enter a valid version number (e.g. 1.0.2.1)");
+                            MessageBox.Show("You must enter a valid version number (e.g. 1.0.2.1 or latest)");
                         }
                     }
                 }
