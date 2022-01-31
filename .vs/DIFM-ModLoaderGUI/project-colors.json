@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "5c85f0b7-65f9-4032-b9c1-ca0538d5bbd5": {
+      "ProjectGuid": "5c85f0b7-65f9-4032-b9c1-ca0538d5bbd5",
+      "DisplayName": "DIFM-ModLoaderGUI",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}
