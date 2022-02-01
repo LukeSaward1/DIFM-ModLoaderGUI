@@ -5,6 +5,8 @@ using System.Runtime.InteropServices;
 using System.IO;
 using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
+using Octokit;
+using System.Linq;
 
 namespace DIFM_ModLoaderGUI
 {
@@ -13,6 +15,8 @@ namespace DIFM_ModLoaderGUI
         public string downloadPath;
         public bool hasSet;
         public string actualURL;
+        public int checkboxPressCount;
+        public bool isDisablePostProccessingChecked;
         public Form1()
         {
             InitializeComponent();
@@ -26,10 +30,36 @@ namespace DIFM_ModLoaderGUI
             if (DwmSetWindowAttribute(Handle, 19, new[] { 1 }, 4) != 0)
                 DwmSetWindowAttribute(Handle, 20, new[] { 1 }, 4);
         }
-
-        private void Form1_Load(object sender, EventArgs e)
+        static async void GetReleases(ComboBox comboBox)
         {
+            try
+            {
+                var client = new GitHubClient(new ProductHeaderValue("DiFM-Speedrun-Mod"));
+                var releases = await client.Repository.Release.GetAll("LukeSaward1", "DiFM-Speedrun-Mod");
+                var latest = releases[0];
+                Array releaseArray = releases.ToArray();
+                comboBox.Items.Add("Latest");
+                foreach (var release in releases)
+                {
+                    comboBox.Items.Add(release.Name);
+                    Console.WriteLine(release.Name);
+                }
+                if(comboBox.Items.Count >= releaseArray.Length)
+                {
+                    string msg = "Got " + comboBox.Items.Count + " releases.";
+                    Console.WriteLine(msg);
+                    MessageBox.Show(msg);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
 
+        }
+
+        private void Form1_Load(object sender, EventArgs e, Form1 form1)
+        {
         }
 
         /// <summary>
@@ -107,6 +137,10 @@ namespace DIFM_ModLoaderGUI
                 hasSet = true;
                 textBox1.Text = folderDlg.SelectedPath;
                 downloadPath = textBox1.Text + @"\Do It For Me V1.0.1_Data\Managed\Assembly-CSharp.dll";
+                Console.WriteLine("Getting releases...");
+                GetReleases(comboBox1);
+                Console.WriteLine("Got releases...");
+
             }
         }
 
@@ -117,31 +151,40 @@ namespace DIFM_ModLoaderGUI
                 using (var client = new WebClient())
                 {
                     downloadPath = textBox1.Text + @"\Do It For Me V1.0.1_Data\Managed\Assembly-CSharp.dll";
-                    if (textBox2.Text.Contains("Latest") || textBox2.Text.Contains("latest"))
+                    if (comboBox1.SelectedItem.ToString() == "Latest")
                     {
-                        try
+                        if (!isDisablePostProccessingChecked)
                         {
-                            client.DownloadFile("https://raw.githubusercontent.com/LukeSaward1/DiFM-Speedrun-Mod/main/Assembly-CSharp.dll", downloadPath);
-                            MessageBox.Show("The file has been successfully downloaded and is located in the 'Managed' folder in the 'Do It For Me V1.0.1_Data' " +
-                                "folder under Assembly-CSharp.dll", "File successfully downloaded");
+                            client.DownloadFile("https://raw.githubusercontent.com/LukeSaward1/DiFM-Speedrun-Mod/main/Assembly-CSharp.dll",
+                                downloadPath);
+                            MessageBox.Show("The file has been successfully downloaded and is located in the 'Managed' folder in the 'Do It For Me "
+                                + "V1.0.1_Data' folder under Assembly-CSharp.dll", "File successfully downloaded");
                         }
-                        catch
+                        else
                         {
-                            MessageBox.Show("You must enter a valid version number (e.g. 1.0.2.1 or latest)");
+                            client.DownloadFile("https://raw.githubusercontent.com/LukeSaward1/DiFM-Speedrun-Mod/main/Assembly-CSharp-NoPost.dll",
+                                downloadPath);
+                            MessageBox.Show("The file has been successfully downloaded and is located in the 'Managed' folder in the 'Do It For Me "
+                                + "V1.0.1_Data' folder under Assembly-CSharp.dll", "File successfully downloaded");
                         }
-                    }
+                    }   
                     else
                     {
-                        try
+                        if(!isDisablePostProccessingChecked)
                         {
-                            actualURL = "https://github.com/LukeSaward1/DiFM-Speedrun-Mod/releases/download/v" + textBox2.Text + "/Assembly-CSharp.dll";
+                            actualURL = "https://github.com/LukeSaward1/DiFM-Speedrun-Mod/releases/download/" + comboBox1.SelectedItem.ToString() +
+                                "/Assembly-CSharp.dll";
                             client.DownloadFile(actualURL, downloadPath);
-                            MessageBox.Show("The file has been successfully downloaded and is located in the 'Managed' folder in the 'Do It For Me V1.0.1_Data' " +
-                                "folder under Assembly-CSharp.dll", "File successfully downloaded");
+                            MessageBox.Show("The file has been successfully downloaded and is located in the 'Managed' folder in the 'Do It For Me " +
+                                "V1.0.1_Data' folder under Assembly-CSharp.dll", "File successfully downloaded");
                         }
-                        catch
+                        else
                         {
-                            MessageBox.Show("You must enter a valid version number (e.g. 1.0.2.1 or latest)");
+                            actualURL = "https://github.com/LukeSaward1/DiFM-Speedrun-Mod/releases/download/" + comboBox1.SelectedItem.ToString() +
+                                "/Assembly-CSharp-NoPost.dll";
+                            client.DownloadFile(actualURL, downloadPath);
+                            MessageBox.Show("The file has been successfully downloaded and is located in the 'Managed' folder in the 'Do It For Me " +
+                                "V1.0.1_Data' folder under Assembly-CSharp.dll", "File successfully downloaded");
                         }
                     }
                 }
@@ -164,18 +207,53 @@ namespace DIFM_ModLoaderGUI
                 string extractedLocationPath = gameLocationDlg.SelectedPath + @"\DoItForMe_V1.0.1_64bit";
                 using (var client = new WebClient())
                 {
-                    MessageBox.Show("Now downloading game. Hang tight.");
-                    client.DownloadFile("https://github.com/LukeSaward1/file-hosting/releases/download/DiFM_V1.0.1_64bit/DiFM_V1.0.1_64bit.zip", gameLocationPath);
+                    MessageBox.Show("Now downloading unmodded game. Hang tight.");
+                    client.DownloadFile("https://github.com/LukeSaward1/file-hosting/releases/download/DiFM_V1.0.1_64bit/DiFM_V1.0.1_64bit.zip", 
+                        gameLocationPath);
                     ExtractZipContent(
                         gameLocationPath,
                         null,
                         extractedLocationPath
                     );
+                    File.Delete(gameLocationPath);
                     MessageBox.Show("The game has been successfully downloaded into " + extractedLocationPath + ".", "Game successfully downloaded");
                     textBox1.Text = extractedLocationPath;
                     hasSet = true;
                 }
             }
+        }
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if(checkboxPressCount == 0 && !isDisablePostProccessingChecked)
+            {
+                DialogResult dialogResult = MessageBox.Show("This option disables all post-processing effects present in the game (grain, vignette, " +
+                    "bloom, ambient occlusion etc.) PERMANENTLY. This option is not preferred as the effects make the game feel more authentic rather " +
+                    "than the effects being modded out which makes it less authentic, unless you or whoever is playing the game find the effects too " +
+                    "distracting or you/they have a sensory issue. \n\nDo you wish to disable post-processing effects?", "Confirm disable?",
+                    MessageBoxButtons.YesNo);
+                if (dialogResult == DialogResult.Yes)
+                {
+                    isDisablePostProccessingChecked = true;
+                    checkBox1.Checked = true;
+                    checkBox1.CheckState = CheckState.Checked;
+                    checkboxPressCount += 1;
+                }
+                if (dialogResult == DialogResult.No)
+                {
+                    isDisablePostProccessingChecked = false;
+                    checkBox1.Checked = false;
+                    checkBox1.CheckState = CheckState.Unchecked;
+                }
+            }
+            else
+            {
+                isDisablePostProccessingChecked = !isDisablePostProccessingChecked;
+            }
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
         }
     }
 }
