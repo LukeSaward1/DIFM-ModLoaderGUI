@@ -7,6 +7,9 @@ using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
 using Octokit;
 using System.Linq;
+using System.Drawing;
+using DiscordRPC;
+using DiscordRPC.Logging;
 
 namespace DIFM_ModLoaderGUI
 {
@@ -17,6 +20,8 @@ namespace DIFM_ModLoaderGUI
         public string actualURL;
         public int checkboxPressCount;
         public bool isDisablePostProccessingChecked;
+        public DiscordRpcClient client;
+
         public Form1()
         {
             InitializeComponent();
@@ -29,6 +34,7 @@ namespace DIFM_ModLoaderGUI
         {
             if (DwmSetWindowAttribute(Handle, 19, new[] { 1 }, 4) != 0)
                 DwmSetWindowAttribute(Handle, 20, new[] { 1 }, 4);
+            Initialize();
         }
         static async void GetReleases(ComboBox comboBox)
         {
@@ -58,6 +64,47 @@ namespace DIFM_ModLoaderGUI
 
         }
 
+        //Called when your application first starts.
+        //For example, just before your main loop, on OnEnable for unity.
+        void Initialize()
+        {
+            /*
+            Create a Discord client
+            NOTE: 	If you are using Unity3D, you must use the full constructor and define
+                     the pipe connection.
+            */
+            client = new DiscordRpcClient("927610658449666048");
+
+            //Set the logger
+            client.Logger = new ConsoleLogger() { Level = LogLevel.Warning };
+
+            //Subscribe to events
+            client.OnReady += (sender, e) =>
+            {
+                Console.WriteLine("Received Ready from user {0}", e.User.Username);
+            };
+
+            client.OnPresenceUpdate += (sender, e) =>
+            {
+                Console.WriteLine("Received Update! {0}", e.Presence);
+            };
+
+            //Connect to the RPC
+            client.Initialize();
+
+            //Set the rich presence
+            //Call this as many times as you want and anywhere in your code.
+            client.SetPresence(new RichPresence()
+            {
+                Details = "Example Project",
+                State = "csharp example",
+                Assets = new Assets()
+                {
+                    LargeImageKey = "heartpickup_0",
+                    LargeImageText = "Lachee's Discord IPC Library"
+                }
+            });
+        }
         private void Form1_Load(object sender, EventArgs e, Form1 form1)
         {
         }
@@ -134,13 +181,20 @@ namespace DIFM_ModLoaderGUI
 
             if (result == DialogResult.OK)
             {
-                hasSet = true;
-                textBox1.Text = folderDlg.SelectedPath;
-                downloadPath = textBox1.Text + @"\Do It For Me V1.0.1_Data\Managed\Assembly-CSharp.dll";
-                Console.WriteLine("Getting releases...");
-                GetReleases(comboBox1);
-                Console.WriteLine("Got releases...");
-
+                string fileExist = folderDlg.SelectedPath + @"\Do It For Me V1.0.1_Data\Managed\Assembly-CSharp.dll";
+                if (File.Exists(fileExist))
+                {
+                    hasSet = true;
+                    textBox1.Text = folderDlg.SelectedPath;
+                    downloadPath = textBox1.Text + @"\Do It For Me V1.0.1_Data\Managed\Assembly-CSharp.dll";
+                    Console.WriteLine("Getting releases...");
+                    GetReleases(comboBox1);
+                    Console.WriteLine("Got releases...");
+                }
+                else
+                {
+                    MessageBox.Show("Please select a valid game path.", "Invalid Game Path");
+                }
             }
         }
 
@@ -252,8 +306,10 @@ namespace DIFM_ModLoaderGUI
             }
         }
 
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        private void button4_Click(object sender, EventArgs e)
         {
+            SpriteLoader sprLoaderFrm = new SpriteLoader();
+            sprLoaderFrm.Show();
         }
     }
 }

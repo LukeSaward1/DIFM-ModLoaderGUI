@@ -5,6 +5,11 @@
       "ProjectGuid": "5c85f0b7-65f9-4032-b9c1-ca0538d5bbd5",
       "DisplayName": "DIFM-ModLoaderGUI",
       "ColorIndex": 0
+    },
+    "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3": {
+      "ProjectGuid": "a2fe74e1-b743-11d0-ae1a-00a0c90fffc3",
+      "DisplayName": "Miscellaneous Files",
+      "ColorIndex": -1
     }
   },
   "NextColorIndex": 1
